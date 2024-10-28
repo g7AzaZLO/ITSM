@@ -12,6 +12,7 @@ database = client[MONGO_DB_NAME]
 messages_collection = database["messages"]
 services_catalog_collection = database["services_catalog"]
 incidents_collection = database["incidents"]
+users_collection = database["users"]
 
 
 # Проверка подключения
@@ -41,8 +42,8 @@ async def initialize_collections():
             print("Коллекция 'incidents' создана.")
 
         if "users" not in collections:
-            await incidents_collection.insert_one({"_init": True})
-            await incidents_collection.delete_many({"_init": True})
+            await users_collection.insert_one({"_init": True})
+            await users_collection.delete_many({"_init": True})
             print("Коллекция 'users' создана.")
         print("Подключение установлено.")
 
