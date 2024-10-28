@@ -1,5 +1,14 @@
-from db_config import check_db_connection
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from db_config import initialize_collections
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await initialize_collections()
+    yield
 
-def main() -> None:
-    check_db_connection()
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/")
+async def read_root():
+    return {"Hello": "World"}
