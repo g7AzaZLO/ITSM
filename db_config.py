@@ -20,7 +20,7 @@ async def initialize_collections():
     try:
         # Проверяем подключение
         await client.admin.command('ping')
-        print("Подключение к MongoDB установлено.")
+        print("Начало поделючения к MongoDB.")
 
         # Проверяем и инициализируем коллекции
         collections = await database.list_collection_names()
@@ -39,6 +39,12 @@ async def initialize_collections():
             await incidents_collection.insert_one({"_init": True})
             await incidents_collection.delete_many({"_init": True})
             print("Коллекция 'incidents' создана.")
+
+        if "users" not in collections:
+            await incidents_collection.insert_one({"_init": True})
+            await incidents_collection.delete_many({"_init": True})
+            print("Коллекция 'users' создана.")
+        print("Подключение установлено.")
 
     except Exception as e:
         print(f"Ошибка при инициализации коллекций MongoDB: {e}")

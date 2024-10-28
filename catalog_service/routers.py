@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
 from db_config import services_catalog_collection
 from catalog_service.models import ServiceCreate, ServiceUpdate, ServiceInDB
@@ -7,10 +7,16 @@ router = APIRouter()
 
 
 @router.post("/services/", response_model=ServiceInDB)
-async def create_service(service: ServiceCreate):
+async def create_service(service: ServiceCreate, status_code=status.HTTP_200_OK):
     """Создание новой услуги в каталоге."""
+    # Проверяем, существует ли услуга с таким же названием
+    existing_service = await services_catalog_collection.find_one({"service_name": service.service_name})
+    if existing_service:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Услуга с таким названием уже существует")
+
     service_data = service.dict()
     result = await services_catalog_collection.insert_one(service_data)
+
     created_service = await services_catalog_collection.find_one({"_id": result.inserted_id})
     return ServiceInDB(**created_service)
 
