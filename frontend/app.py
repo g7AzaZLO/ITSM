@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
 # URL API FastAPI
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://127.0.0.1:8006"
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -21,7 +21,7 @@ def register():
             "role": 0
         }
 
-        response = requests.post(f"{API_URL}/users/", json=user_data)
+        response = requests.post(f"{API_URL}/users/users/", json=user_data)
 
         if response.status_code == 201:
             flash("Регистрация прошла успешно! Войдите в систему.", "success")
@@ -41,7 +41,7 @@ def login():
         password = request.form['password']
 
         # Запрашиваем данные пользователя из FastAPI
-        response = requests.get(f"{API_URL}/users/{username}")
+        response = requests.get(f"{API_URL}/users/users/{username}")
         if response.status_code == 200:
             user_data = response.json()
 
