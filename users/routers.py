@@ -39,7 +39,7 @@ async def update_user(username: str, user_update: UserUpdate):
     updated_user["_id"] = str(updated_user["_id"])  # Преобразование ObjectId в строку
     return UserBase(**updated_user)
 
-@router.get("/users/users/{username}", response_model=UserBase)
+@router.get("/users/{username}", response_model=UserBase)
 async def get_user(username: str):
     """Получение данных пользователя по имени."""
     user = await users_collection.find_one({"username": username})
@@ -48,3 +48,12 @@ async def get_user(username: str):
 
     user["_id"] = str(user["_id"])  # Преобразование ObjectId в строку
     return UserBase(**user)
+
+
+@router.post("/users/verify_password")
+async def verify_password(username: str, password: str):
+    """Проверка пароля пользователя."""
+    user = await users_collection.find_one({"username": username})
+    if not user or user["password"] != password:
+        return {"is_valid": False}
+    return {"is_valid": True}

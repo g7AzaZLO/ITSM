@@ -2,8 +2,8 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException, status
 from bson import ObjectId
-from db.db_config import services_catalog_collection
-from catalog_service.models import ServiceCreate, ServiceUpdate, ServiceInDB
+from db.db_config import services_catalog_collection, service_orders_collection
+from catalog_service.models import ServiceCreate, ServiceUpdate, ServiceInDB, ServiceOrder, MultiServiceOrder
 
 router = APIRouter()
 
@@ -53,7 +53,7 @@ async def get_all_services():
     """Получение всех услуг из каталога."""
     services = []
     async for service in services_catalog_collection.find():
-        service["_id"] = str(service["_id"])  # Преобразуем ObjectId в строку
+        service["_id"] = str(service["_id"])  # Преобразование ObjectId в строку
         services.append(ServiceInDB(**service))
     return services
 
@@ -87,3 +87,73 @@ async def delete_service_by_name(service_name: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Услуга с таким названием не найдена")
     return {"detail": f"Услуга '{service_name}' успешно удалена"}
+
+
+@router.post("/services/order/single", status_code=status.HTTP_201_CREATED)
+async def order_service(order: ServiceOrder):
+    """Оформление заказа на услугу."""
+    # Проверяем, существует ли услуга
+    service = await services_catalog_collection.find_one({"_id": ObjectId(order.service_id)})
+    if not service:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Услуга не найдена")
+
+    # Расчет общей цены
+    order.total_price = service["price"] * order.quantity
+
+    # Добавляем заказ в коллекцию
+    order_data = order.dict()
+    result = await service_orders_collection.insert_one(order_data)
+
+    # Возвращаем подтверждение заказа
+    created_order = await service_orders_collection.find_one({"_id": result.inserted_id})
+    created_order["_id"] = str(created_order["_id"])  # Преобразование ObjectId в строку
+    return {"detail": "Заказ успешно оформлен", "order": created_order}
+
+
+@router.post("/services/order", status_code=status.HTTP_201_CREATED)
+async def order_multiple_services(order: MultiServiceOrder):
+    """Оформление заказа на несколько услуг одновременно."""
+    print("Полученные данные:", order)  # Отладка
+    total_price = 0
+    order_details = []
+
+    for item in order.items:
+        # Проверяем, существует ли услуга
+        service = await services_catalog_collection.find_one({"_id": ObjectId(item.service_id)})
+        if not service:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Услуга с ID {item.service_id} не найдена")
+
+        # Рассчитываем цену для текущей услуги и добавляем к общей стоимости
+        item_total = service["price"] * item.quantity
+        total_price += item_total
+
+        # Добавляем детализированную информацию по услуге в заказ
+        order_details.append({
+            "service_id": str(item.service_id),
+            "service_name": service["service_name"],
+            "quantity": item.quantity,
+            "item_total": item_total
+        })
+
+    # Сохраняем заказ с общей суммой и детализированной информацией
+    order_data = order.dict()
+    order_data["total_price"] = total_price
+    order_data["order_details"] = order_details
+
+    result = await service_orders_collection.insert_one(order_data)
+
+    # Возвращаем подтверждение заказа с информацией о заказанных услугах
+    created_order = await service_orders_collection.find_one({"_id": result.inserted_id})
+    created_order["_id"] = str(created_order["_id"])  # Преобразуем ObjectId в строку
+    return {"detail": "Заказ успешно оформлен", "order": created_order}
+
+
+@router.get("/services/{service_id}", response_model=ServiceInDB)
+async def get_service(service_id: str):
+    """Получение услуги по ID."""
+    service = await services_catalog_collection.find_one({"_id": ObjectId(service_id)})
+    if service is None:
+        raise HTTPException(status_code=404, detail="Услуга не найдена")
+
+    return ServiceInDB(**service)

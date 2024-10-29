@@ -6,6 +6,7 @@ class UserBase(BaseModel):
     """Базовая модель пользователя."""
     username: str = Field(..., title="имя пользователя", max_length=30)
     role: int = Field(0, title="роль пользователя")
+    password: str = Field(..., title="пароль", max_length=500)
 
 
 class UserCreate(UserBase):

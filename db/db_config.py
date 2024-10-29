@@ -14,6 +14,7 @@ services_catalog_collection = database["services_catalog"]
 incidents_collection = database["incidents"]
 users_collection = database["users"]
 chats_collection = database["chats"]
+service_orders_collection = database["service_orders"]
 
 
 # Проверка подключения
@@ -51,6 +52,11 @@ async def initialize_collections():
             await chats_collection.insert_one({"_init": True})
             await chats_collection.delete_many({"_init": True})
             print("Коллекция 'chats' создана.")
+
+        if "service_orders" not in collections:
+            await service_orders_collection.insert_one({"_init": True})
+            await service_orders_collection.delete_many({"_init": True})
+            print("Коллекция 'service_orders_collection' создана.")
         print("Подключение установлено.")
 
     except Exception as e:
