@@ -55,7 +55,7 @@ def login():
         else:
             flash("Пользователь не найден.", "error")
 
-    return render_template("login.html")
+    return render_template("hello.html")
 
 
 @app.route('/logout')

@@ -1,7 +1,4 @@
-# users_routes.py
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
-from bson import ObjectId
 from db.db_config import database
 from users.models import UserCreate, UserUpdate, UserBase
 
@@ -41,3 +38,13 @@ async def update_user(username: str, user_update: UserUpdate):
     updated_user = await users_collection.find_one({"username": username})
     updated_user["_id"] = str(updated_user["_id"])  # Преобразование ObjectId в строку
     return UserBase(**updated_user)
+
+@router.get("/users/users/{username}", response_model=UserBase)
+async def get_user(username: str):
+    """Получение данных пользователя по имени."""
+    user = await users_collection.find_one({"username": username})
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
+
+    user["_id"] = str(user["_id"])  # Преобразование ObjectId в строку
+    return UserBase(**user)
