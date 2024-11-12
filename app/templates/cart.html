@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Корзина</h1>
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+{% if services_in_cart %}
+<table>
+    <tr>
+        <th>Услуга</th>
+        <th>Цена</th>
+        <th>Количество</th>
+        <th>Стоимость</th>
+    </tr>
+    {% for item in services_in_cart %}
+    <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.price }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.subtotal }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="3">Итого:</td>
+        <td>{{ total_price }}</td>
+    </tr>
+</table>
+<form method="post" action="/cart/checkout">
+    <button type="submit">Оформить заявку</button>
+</form>
+{% else %}
+<p>Ваша корзина пуста.</p>
+{% endif %}
+{% endblock %}

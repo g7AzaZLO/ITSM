@@ -6,6 +6,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.templating import Jinja2Templates
 from app.auth import router as auth_router
+from app.services import router as services_router
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +18,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Инициализация приложения FastAPI
 app = FastAPI()
 
+app.include_router(services_router)
 # Настройка сессий
 app.add_middleware(SessionMiddleware, secret_key='your-secret-key', session_cookie='session')
 

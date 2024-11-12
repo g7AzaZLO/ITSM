@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Каталог услуг</h1>
+<ul>
+    {% for service in services %}
+    <li>
+        <strong>{{ service[1] }}</strong>: {{ service[2] }}<br>
+        Цена: {{ service[3] }} за {{ 'единицу' if service[4] == 'unit' else 'час' if service[4] == 'hour' else 'сутки' }}<br>
+        {% if user.role == 'user' %}
+            <form method="post" action="/services/add-to-cart">
+                <input type="hidden" name="service_id" value="{{ service[0] }}">
+                <label>Количество:</label>
+                <input type="number" name="quantity" value="1" min="1" required>
+                <button type="submit">Добавить в корзину</button>
+            </form>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+<a href="/cart">Перейти в корзину</a>
+{% endblock %}

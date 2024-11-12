@@ -1,5 +1,6 @@
 import aiosqlite
 import asyncio
+from app.config import DATABASE
 
 async def init_db():
     async with aiosqlite.connect('database.db') as db:
@@ -35,31 +36,33 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS services (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                description TEXT,
-                status TEXT NOT NULL CHECK(status IN ('active', 'inactive', 'pending', 'retired')),
-                details TEXT
+                description TEXT NOT NULL,
+                price REAL NOT NULL,
+                price_per TEXT NOT NULL CHECK(price_per IN ('unit', 'hour', 'day')),
+                is_active INTEGER NOT NULL CHECK(is_active IN (0, 1))
             );
         """)
 
-        # Configuration Items (CI) table
         await db.execute("""
-            CREATE TABLE IF NOT EXISTS config_items (
+            CREATE TABLE IF NOT EXISTS service_requests (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                details TEXT,
-                type TEXT,
-                status TEXT CHECK(status IN ('active', 'inactive', 'decommissioned'))
+                user_id INTEGER NOT NULL,
+                request_date TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('Pending', 'In Progress', 'Serviced', 'Rejected')),
+                total_price REAL NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
         """)
 
         # Association table between services and configuration items
         await db.execute("""
-            CREATE TABLE IF NOT EXISTS service_config_items (
+            CREATE TABLE IF NOT EXISTS service_cart_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                request_id INTEGER NOT NULL,
                 service_id INTEGER NOT NULL,
-                config_item_id INTEGER NOT NULL,
-                PRIMARY KEY (service_id, config_item_id),
-                FOREIGN KEY(service_id) REFERENCES services(id),
-                FOREIGN KEY(config_item_id) REFERENCES config_items(id)
+                quantity INTEGER NOT NULL CHECK(quantity > 0),
+                FOREIGN KEY(request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+                FOREIGN KEY(service_id) REFERENCES services(id) ON DELETE CASCADE
             );
         """)
 
@@ -99,6 +102,25 @@ async def init_db():
         # Commit the changes
         await db.commit()
 
+
+async def change_user_role(username: str, new_role: str):
+    allowed_roles = ['user', 'employee', 'admin']
+    if new_role not in allowed_roles:
+        raise ValueError(f"Недопустимая роль. Допустимые роли: {', '.join(allowed_roles)}")
+
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("PRAGMA foreign_keys = ON;")
+        async with db.execute("SELECT id FROM users WHERE username = ?", (username,)) as cursor:
+            user = await cursor.fetchone()
+            if user:
+                await db.execute("UPDATE users SET role = ? WHERE username = ?", (new_role, username))
+                await db.commit()
+                print(f"Роль пользователя '{username}' успешно изменена на '{new_role}'.")
+            else:
+                raise ValueError(f"Пользователь с логином '{username}' не найден.")
+
+
 # Run the database initialization
 if __name__ == "__main__":
     asyncio.run(init_db())
+    #asyncio.run(change_user_role("root", "admin"))
