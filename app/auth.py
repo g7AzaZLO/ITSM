@@ -46,6 +46,7 @@ async def register_post(
     email: str = Form(...),
     password: str = Form(...)
 ):
+    logger.info(f"Получены данные регистрации: username={username}, email={email}")
     try:
         async with aiosqlite.connect(DATABASE) as db:
             # Добавляем нового пользователя с ролью 'user'
@@ -55,14 +56,16 @@ async def register_post(
             )
             await db.commit()
         return RedirectResponse(url="/login", status_code=303)
-    except aiosqlite.IntegrityError:
-        # Имя пользователя или email уже заняты
-        error_message = "Имя пользователя или email уже заняты."
+    except aiosqlite.IntegrityError as e:
+        # Логируем подробное сообщение об ошибке
+        logger.error(f"IntegrityError при регистрации: {e}")
+        error_message = f"Ошибка базы данных: {e}"
         return templates.TemplateResponse("register.html", {"request": request, "error": error_message})
     except Exception as e:
         logger.error(f"Ошибка при регистрации: {e}")
-        error_message = "Произошла ошибка при регистрации. Пожалуйста, попробуйте позже."
+        error_message = f"Произошла ошибка: {e}"
         return templates.TemplateResponse("register.html", {"request": request, "error": error_message})
+
 
 # Маршрут для страницы входа (GET)
 @router.get("/login", response_class=HTMLResponse)

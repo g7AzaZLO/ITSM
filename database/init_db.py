@@ -13,7 +13,7 @@ async def init_db():
                 username TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('administrator', 'employee', 'support', 'client'))
+                role TEXT NOT NULL CHECK(role IN ('user', 'employee', 'admin'))
             );
         """)
 
