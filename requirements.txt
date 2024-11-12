@@ -1,2 +1,5 @@
-fastapi[all]
-motor
+fastapi
+uvicorn
+aiosqlite
+jinja2
+python-multipart

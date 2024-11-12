@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title if title else "ITSM System" }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    {% if user %}
+        <p>Привет, {{ user.username }}! (<a href="/logout">Выйти</a>)</p>
+    {% endif %}
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>
