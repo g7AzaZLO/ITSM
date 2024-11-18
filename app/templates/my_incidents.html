@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Мои инциденты</h1>
+<table>
+    <tr>
+        <th>Тема</th>
+        <th>Статус</th>
+        <th>Дата создания</th>
+        <th>Действия</th>
+    </tr>
+    {% for incident in incidents %}
+    <tr>
+        <td>{{ incident['title'] }}</td>
+        <td>{{ incident['status'] }}</td>
+        <td>{{ incident['created_at'] }}</td>
+        <td><a href="/incidents/{{ incident['incident_id'] }}">Просмотр</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

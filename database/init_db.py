@@ -86,6 +86,22 @@ async def init_db():
             );
         """)
 
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS incidents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('open', 'in_progress', 'resolved', 'closed')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                reporter_id INTEGER NOT NULL,
+                assignee_id INTEGER,
+                resolution_time INTEGER,
+                FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(assignee_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+        """)
+
         await db.commit()
 
 
@@ -109,4 +125,4 @@ async def change_user_role(username: str, new_role: str):
 # Run the database initialization
 if __name__ == "__main__":
     asyncio.run(init_db())
-    asyncio.run(change_user_role("root", "admin"))
+    #asyncio.run(change_user_role("root", "admin"))

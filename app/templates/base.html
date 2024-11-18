@@ -68,11 +68,18 @@
                         <a class="nav-link" href="/messages/contacts">Сообщения</a>
                     </li>
                     {% if user.role == 'user' %}
+
                         <li class="nav-item">
                             <a class="nav-link" href="/cart">Корзина</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/service-requests/user">Мои заявки</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/incidents/new">Сообщить об инциденте</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/incidents/my">Мои инциденты</a>
                         </li>
                     {% elif user.role != 'user' %}
                         <li class="nav-item">
@@ -80,6 +87,9 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/service-requests">Заявки на услуги</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/incidents">Все инциденты</a>
                         </li>
                     {% if user.role == 'admin' %}
                         <li class="nav-item">

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ incident['title'] }}</h1>
+<p><strong>Статус:</strong> {{ incident['status'] }}</p>
+<p><strong>Автор:</strong> {{ incident['reporter_username'] }}</p>
+<p><strong>Описание:</strong></p>
+<p>{{ incident['description'] }}</p>
+{% if user.role in ['employee', 'admin'] %}
+<form method="post" action="/incidents/{{ incident['incident_id'] }}/update">
+    <label>Статус:</label>
+    <select name="status">
+        <option value="open" {% if incident['status'] == 'open' %}selected{% endif %}>Открыт</option>
+        <option value="in_progress" {% if incident['status'] == 'in_progress' %}selected{% endif %}>В работе</option>
+        <option value="resolved" {% if incident['status'] == 'resolved' %}selected{% endif %}>Решен</option>
+        <option value="closed" {% if incident['status'] == 'closed' %}selected{% endif %}>Закрыт</option>
+    </select>
+    <button type="submit">Обновить статус</button>
+</form>
+{% endif %}
+{% endblock %}
+
