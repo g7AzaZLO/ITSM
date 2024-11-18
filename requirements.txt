@@ -1,5 +1,7 @@
-fastapi
+fastapi==0.115.4
 uvicorn
-aiosqlite
+aiosqlite==0.20.0
 jinja2
 python-multipart
+
+starlette==0.41.2

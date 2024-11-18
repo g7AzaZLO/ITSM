@@ -1,15 +1,27 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h1>Вход</h1>
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
-<form method="post">
-    <label>Имя пользователя:</label><br>
-    <input type="text" name="username" required><br>
-    <label>Пароль:</label><br>
-    <input type="password" name="password" required><br>
-    <button type="submit">Войти</button>
-</form>
-<p>Нет аккаунта? <a href="/register">Зарегистрироваться здесь</a>.</p>
+    <div class="text-center">
+        <h1 class="text-light">Вход</h1>
+
+        {% if error %}
+            <p class="text-danger">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" class="mt-4">
+            <div class="form-group">
+                <label for="username" class="text-light">Имя пользователя:</label>
+                <input type="text" name="username" id="username" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="text-light">Пароль:</label>
+                <input type="password" name="password" id="password" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-3">Войти</button>
+        </form>
+
+        <p class="text-light mt-3">Нет аккаунта? <a href="/register" class="text-info">Зарегистрироваться здесь</a>.</p>
+    </div>
 {% endblock %}

@@ -1,5 +1,8 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h1>Добро пожаловать в ITSM систему</h1>
-<p>Ваша роль: {{ user.role }}</p>
+    <div class="text-center">
+        <h1 class="text-light">Добро пожаловать в ITSM систему</h1>
+        <p class="text-light">Ваша роль: <span class="font-weight-bold">{{ user.role }}</span></p>
+    </div>
 {% endblock %}

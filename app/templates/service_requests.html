@@ -1,34 +1,42 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h1>Заявки на услуги</h1>
-<table>
-    <tr>
-        <th>ID</th>
-        <th>Пользователь</th>
-        <th>Дата заявки</th>
-        <th>Статус</th>
-        <th>Общая стоимость</th>
-        <th>Действия</th>
-    </tr>
-    {% for req in requests %}
-    <tr>
-        <td>{{ req[0] }}</td>
-        <td>{{ req[1] }}</td>
-        <td>{{ req[2] }}</td>
-        <td>{{ req[3] }}</td>
-        <td>{{ req[4] }}</td>
-        <td>
-            <form method="post" action="/service-requests/update-status/{{ req[0] }}">
-                <select name="status">
-                    <option value="Pending" {% if req[3] == 'Pending' %}selected{% endif %}>Ожидает</option>
-                    <option value="In Progress" {% if req[3] == 'In Progress' %}selected{% endif %}>В процессе</option>
-                    <option value="Serviced" {% if req[3] == 'Serviced' %}selected{% endif %}>Обслужен</option>
-                    <option value="Rejected" {% if req[3] == 'Rejected' %}selected{% endif %}>Отклонен</option>
-                </select>
-                <button type="submit">Обновить</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    <div class="container mt-4" style="max-width: 1400px; padding: 0 0px;">
+        <h1 class="text-light text-center">Заявки на услуги</h1>
+
+        <table class="table table-dark table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Пользователь</th>
+                    <th>Дата заявки</th>
+                    <th>Статус</th>
+                    <th>Общая стоимость</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                    <tr>
+                        <td>{{ req[0] }}</td>
+                        <td>{{ req[1] }}</td>
+                        <td>{{ req[2] }}</td>
+                        <td>{{ req[3] }}</td>
+                        <td>{{ req[4] }}</td>
+                        <td>
+                            <form method="post" action="/service-requests/update-status/{{ req[0] }}" class="d-inline">
+                                <select name="status" class="form-control form-control-sm">
+                                    <option value="Pending" {% if req[3] == 'Pending' %}selected{% endif %}>Ожидает</option>
+                                    <option value="In Progress" {% if req[3] == 'In Progress' %}selected{% endif %}>В процессе</option>
+                                    <option value="Serviced" {% if req[3] == 'Serviced' %}selected{% endif %}>Обслужен</option>
+                                    <option value="Rejected" {% if req[3] == 'Rejected' %}selected{% endif %}>Отклонен</option>
+                                </select>
+                                <button type="submit" class="btn btn-info btn-sm mt-2">Обновить</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}

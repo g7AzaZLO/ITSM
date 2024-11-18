@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Создать нового пользователя</h1>
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+<form method="post">
+    <label>Логин:</label><br>
+    <input type="text" name="username" required><br>
+    <label>Email:</label><br>
+    <input type="email" name="email" required><br>
+    <label>Пароль:</label><br>
+    <input type="password" name="password" required><br>
+    <label>Роль:</label><br>
+    <select name="role" required>
+        <option value="user">Пользователь</option>
+        <option value="employee">Сотрудник</option>
+        <option value="admin">Администратор</option>
+    </select><br><br>
+    <button type="submit">Создать</button>
+</form>
+{% endblock %}
