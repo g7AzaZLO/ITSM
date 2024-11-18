@@ -1,6 +1,7 @@
 import os
 import logging
 from fastapi import FastAPI, Request
+from starlette.middleware import Middleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -8,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from app.auth import router as auth_router
 from app.services import router as services_router
 from app.admin import router as admin_router
+from app.messaging import router as messaging_router
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +31,7 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 # Подключение маршрутов из файла auth.py
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(messaging_router)
 
 # Настройка шаблонов Jinja2
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))

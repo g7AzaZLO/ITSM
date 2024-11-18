@@ -18,20 +18,6 @@ async def init_db():
             );
         """)
 
-        # Messages table
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                sender_id INTEGER NOT NULL,
-                receiver_id INTEGER NOT NULL,
-                content TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                FOREIGN KEY(sender_id) REFERENCES users(id),
-                FOREIGN KEY(receiver_id) REFERENCES users(id)
-            );
-        """)
-
-        # Services table
         await db.execute("""
             CREATE TABLE IF NOT EXISTS services (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +40,6 @@ async def init_db():
             );
         """)
 
-        # Association table between services and configuration items
         await db.execute("""
             CREATE TABLE IF NOT EXISTS service_cart_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,40 +51,41 @@ async def init_db():
             );
         """)
 
-        # Incidents table
         await db.execute("""
-            CREATE TABLE IF NOT EXISTS incidents (
+            CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                reporter_id INTEGER NOT NULL,
-                description TEXT NOT NULL,
-                status TEXT NOT NULL CHECK(status IN ('Open', 'In Progress', 'Resolved', 'Closed')),
-                priority TEXT CHECK(priority IN ('Low', 'Medium', 'High', 'Critical')),
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                updated_at DATETIME,
-                assigned_to INTEGER,
-                service_id INTEGER,
-                config_item_id INTEGER,
-                FOREIGN KEY(reporter_id) REFERENCES users(id),
-                FOREIGN KEY(assigned_to) REFERENCES users(id),
-                FOREIGN KEY(service_id) REFERENCES services(id),
-                FOREIGN KEY(config_item_id) REFERENCES config_items(id)
+                sender_id INTEGER NOT NULL,
+                receiver_id INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                is_read INTEGER NOT NULL CHECK(is_read IN (0, 1)),
+                FOREIGN KEY(sender_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(receiver_id) REFERENCES users(id) ON DELETE CASCADE
             );
         """)
 
-        # Incident updates table
         await db.execute("""
-            CREATE TABLE IF NOT EXISTS incident_updates (
+            CREATE TABLE IF NOT EXISTS blocked_users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                incident_id INTEGER NOT NULL,
-                updater_id INTEGER NOT NULL,
-                update_text TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                FOREIGN KEY(incident_id) REFERENCES incidents(id),
-                FOREIGN KEY(updater_id) REFERENCES users(id)
+                user_id INTEGER NOT NULL,
+                blocked_user_id INTEGER NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(blocked_user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(user_id, blocked_user_id)
             );
         """)
 
-        # Commit the changes
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS conversations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user1_id INTEGER NOT NULL,
+                user2_id INTEGER NOT NULL,
+                FOREIGN KEY(user1_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(user2_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(user1_id, user2_id)
+            );
+        """)
+
         await db.commit()
 
 
@@ -123,4 +109,4 @@ async def change_user_role(username: str, new_role: str):
 # Run the database initialization
 if __name__ == "__main__":
     asyncio.run(init_db())
-    #asyncio.run(change_user_role("root", "admin"))
+    asyncio.run(change_user_role("root", "admin"))

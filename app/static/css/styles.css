@@ -60,3 +60,43 @@ th, td {
     padding: 8px;
     text-align: left;
 }
+
+.chat {
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.message.sent {
+    text-align: right;
+}
+
+.message.received {
+    text-align: left;
+}
+
+.message p {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    max-width: 70%;
+}
+
+.message.sent p {
+    background-color: #dcf8c6;
+}
+
+.message.received p {
+    background-color: #f1f0f0;
+}
+
+.message span {
+    display: block;
+    font-size: 0.8em;
+    color: #888;
+}
