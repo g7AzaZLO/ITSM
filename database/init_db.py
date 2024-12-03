@@ -128,4 +128,4 @@ async def change_user_role(username: str, new_role: str):
 # Run the database initialization
 if __name__ == "__main__":
     asyncio.run(init_db())
-    asyncio.run(change_user_role("root", "admin"))
+    #asyncio.run(change_user_role("root", "admin"))
