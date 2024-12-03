@@ -1,3 +1,5 @@
+import sqlite3
+
 import aiosqlite
 import asyncio
 from app.config import DATABASE
@@ -25,7 +27,8 @@ async def init_db():
                 description TEXT NOT NULL,
                 price REAL NOT NULL,
                 price_per TEXT NOT NULL CHECK(price_per IN ('unit', 'hour', 'day')),
-                is_active INTEGER NOT NULL CHECK(is_active IN (0, 1))
+                is_active INTEGER NOT NULL CHECK(is_active IN (0, 1)),
+                category TEXT NOT NULL DEFAULT 'business'
             );
         """)
 

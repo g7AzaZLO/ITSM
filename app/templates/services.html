@@ -1,33 +1,20 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <div class="container mt-4">
-        <h1 class="text-light text-center">Каталог услуг</h1>
+<h1 class="text-light text-center">Каталог услуг</h1>
+<p class="text-light">Категория: {{ 'Бизнес' if user.role == 'user' else 'Технический' }}</p>
 
-        <ul class="list-group">
-            {% for service in services %}
-                <li class="list-group-item bg-dark text-light mb-3 rounded">
-                    <strong>{{ service[1] }}</strong>: {{ service[2] }}<br>
-                    Цена: {{ service[3] }} за {{ 'единицу' if service[4] == 'unit' else 'час' if service[4] == 'hour' else 'сутки' }}<br>
+<ul class="list-group">
+    {% for service in services %}
+    <li class="list-group-item bg-dark text-light mb-3 rounded">
+        <strong>{{ service[1] }}</strong>: {{ service[2] }}<br>
+        Цена: {{ service[3] }} за {{ 'единицу' if service[4] == 'unit' else 'час' if service[4] == 'hour' else 'сутки' }}
+    </li>
+    {% endfor %}
+</ul>
 
-                    {% if user.role == 'user' %}
-                        <form method="post" action="/services/add-to-cart" class="mt-2">
-                            <input type="hidden" name="service_id" value="{{ service[0] }}">
-                            <div class="form-group">
-                                <label for="quantity_{{ service[0] }}" class="text-light">Количество:</label>
-                                <input type="number" name="quantity" id="quantity_{{ service[0] }}" class="form-control" value="1" min="1" required>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm">Добавить в корзину</button>
-                        </form>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-
-        {% if user.role == 'user' %}
-            <div class="text-center mt-3">
-                <a href="/cart" class="btn btn-info btn-lg">Перейти в корзину</a>
-            </div>
-        {% endif %}
-    </div>
+{% if user.role in ['employee', 'admin'] %}
+<div class="text-center mt-3">
+    <a href="/services/manage" class="btn btn-info btn-lg">Управление услугами</a>
+</div>
+{% endif %}
 {% endblock %}

@@ -66,6 +66,9 @@
                     </li>
                     {% if user.role == 'user' %}
                         <li class="nav-item">
+                            <a class="nav-link" href="/services/business">Бизнес-каталог</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="/combined-request">Создать заявку</a>
                         </li>
                         <li class="nav-item">
@@ -73,7 +76,10 @@
                         </li>
                     {% elif user.role != 'user' %}
                     <li class="nav-item">
-                        <a class="nav-link" href="/services">Каталог услуг</a>
+                        <a class="nav-link" href="/services/business">Бизнес-каталог</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/services/technical">Технический каталог</a>
                     </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/services/manage">Управление услугами</a>

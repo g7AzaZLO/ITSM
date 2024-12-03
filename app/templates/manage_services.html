@@ -4,46 +4,58 @@
     <div class="container mt-4">
         <h1 class="text-light text-center">Управление услугами</h1>
 
-        <div class="row">
-            <!-- Контейнер для добавления новой услуги -->
-            <div class="col-md-6 mb-4">
-                <h2 class="text-light">Добавить новую услугу</h2>
-                <form method="post" action="/services/add" class="bg-dark p-4 rounded shadow">
-                    <div class="form-group">
-                        <label for="name" class="text-light">Название:</label>
-                        <input type="text" name="name" id="name" class="form-control" required>
-                    </div>
+    <div class="row">
+        <!-- Контейнер для добавления новой услуги -->
+        <div class="col-md-6 mb-4">
+            <h2 class="text-light">Добавить новую услугу</h2>
+            <form method="post" action="/services/add" class="bg-dark p-4 rounded shadow">
+                <div class="form-group">
+                    <label for="name" class="text-light">Название:</label>
+                    <input type="text" name="name" id="name" class="form-control" required>
+                </div>
 
-                    <div class="form-group">
-                        <label for="description" class="text-light">Описание:</label>
-                        <textarea name="description" id="description" class="form-control" required></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="description" class="text-light">Описание:</label>
+                    <textarea name="description" id="description" class="form-control" required></textarea>
+                </div>
 
-                    <div class="form-group">
-                        <label for="price" class="text-light">Цена:</label>
-                        <input type="number" step="0.01" name="price" id="price" class="form-control" required>
-                    </div>
+                <div class="form-group">
+                    <label for="price" class="text-light">Цена:</label>
+                    <input type="number" step="0.01" name="price" id="price" class="form-control" required>
+                </div>
 
-                    <div class="form-group">
-                        <label for="price_per" class="text-light">Цена за:</label>
-                        <select name="price_per" id="price_per" class="form-control" required>
-                            <option value="unit">единицу</option>
-                            <option value="hour">час</option>
-                            <option value="day">сутки</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="price_per" class="text-light">Цена за:</label>
+                    <select name="price_per" id="price_per" class="form-control" required>
+                        <option value="unit">единицу</option>
+                        <option value="hour">час</option>
+                        <option value="day">сутки</option>
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label for="is_active" class="text-light">Активна:</label>
-                        <select name="is_active" id="is_active" class="form-control" required>
-                            <option value="1">Да</option>
-                            <option value="0">Нет</option>
-                        </select>
-                    </div>
+                {% if user.role == 'admin' %}
+                <div class="form-group">
+                    <label for="category" class="text-light">Категория:</label>
+                    <select name="category" id="category" class="form-control" required>
+                        <option value="business">Бизнес</option>
+                        <option value="technical">Технический</option>
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" name="category" value="business">
+                {% endif %}
 
-                    <button type="submit" class="btn btn-success btn-block">Добавить</button>
-                </form>
-            </div>
+                <div class="form-group">
+                    <label for="is_active" class="text-light">Активна:</label>
+                    <select name="is_active" id="is_active" class="form-control" required>
+                        <option value="1">Да</option>
+                        <option value="0">Нет</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-block">Добавить</button>
+            </form>
+        </div>
 
             <!-- Контейнер для списка услуг -->
             <div class="col-md-6">
@@ -85,6 +97,18 @@
                                         </select>
                                     </div>
 
+                                    {% if user.role == 'admin' %}
+                                    <div class="form-group">
+                                        <label for="category_{{ service[0] }}" class="text-light">Категория:</label>
+                                        <select name="category" id="category_{{ service[0] }}" class="form-control" required>
+                                            <option value="business" {% if service[6] == 'business' %}selected{% endif %}>Бизнес</option>
+                                            <option value="technical" {% if service[6] == 'technical' %}selected{% endif %}>Технический</option>
+                                        </select>
+                                    </div>
+                                    {% else %}
+                                    <input type="hidden" name="category" value="business">
+                                    {% endif %}
+
                                     <div class="form-group">
                                         <label for="is_active_{{ service[0] }}" class="text-light">Активна:</label>
                                         <select name="is_active" id="is_active_{{ service[0] }}" class="form-control" required>
@@ -100,6 +124,7 @@
                                     <button type="submit" class="btn btn-danger btn-block">Удалить</button>
                                 </form>
                             </div>
+
                         </li>
                     {% endfor %}
                 </ul>

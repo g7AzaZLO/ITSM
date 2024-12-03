@@ -229,6 +229,7 @@ async def manage_services(request: Request, current_user: dict = Depends(role_re
     return templates.TemplateResponse("manage_services.html", {"request": request, "services": services, "user": current_user})
 
 # Маршрут для добавления услуги
+# Добавление новой услуги
 @router.post("/services/add")
 async def add_service(
     request: Request,
@@ -236,43 +237,48 @@ async def add_service(
     description: str = Form(...),
     price: float = Form(...),
     price_per: str = Form(...),
+    category: str = Form(...),  # Категория услуги
     is_active: int = Form(...),
     current_user: dict = Depends(role_required(['employee', 'admin']))
 ):
-    if price_per not in ['unit', 'hour', 'day']:
-        error_message = "Недопустимое значение для 'Цена за'."
-        return templates.TemplateResponse("manage_services.html", {"request": request, "error": error_message, "user": current_user})
+    # Если сотрудник добавляет услугу, категория принудительно становится "business"
+    if current_user['role'] == 'employee':
+        category = 'business'
+
     async with aiosqlite.connect(DATABASE) as db:
         await db.execute("""
-            INSERT INTO services (name, description, price, price_per, is_active)
-            VALUES (?, ?, ?, ?, ?)
-        """, (name, description, price, price_per, is_active))
+            INSERT INTO services (name, description, price, price_per, category, is_active)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (name, description, price, price_per, category, is_active))
         await db.commit()
-    return RedirectResponse(url="/services/manage", status_code=303)
 
-# Маршрут для редактирования услуги
+    return RedirectResponse(url=f"/services/{category}", status_code=303)
+
+
+# Редактирование услуги
 @router.post("/services/edit/{service_id}")
 async def edit_service(
-    request: Request,
     service_id: int,
     name: str = Form(...),
     description: str = Form(...),
     price: float = Form(...),
     price_per: str = Form(...),
+    category: str = Form(...),
     is_active: int = Form(...),
     current_user: dict = Depends(role_required(['employee', 'admin']))
 ):
-    if price_per not in ['unit', 'hour', 'day']:
-        error_message = "Недопустимое значение для 'Цена за'."
-        return templates.TemplateResponse("manage_services.html", {"request": request, "error": error_message, "user": current_user})
+    # Сотрудники могут редактировать только бизнес-услуги
+    if current_user['role'] == 'employee' and category != 'business':
+        raise HTTPException(status_code=403, detail="Вы можете редактировать только бизнес-услуги.")
     async with aiosqlite.connect(DATABASE) as db:
         await db.execute("""
             UPDATE services
-            SET name = ?, description = ?, price = ?, price_per = ?, is_active = ?
+            SET name = ?, description = ?, price = ?, price_per = ?, category = ?, is_active = ?
             WHERE id = ?
-        """, (name, description, price, price_per, is_active, service_id))
+        """, (name, description, price, price_per, category, is_active, service_id))
         await db.commit()
-    return RedirectResponse(url="/services/manage", status_code=303)
+    return RedirectResponse(url=f"/services/{category}", status_code=303)
+
 
 # Маршрут для удаления услуги
 @router.post("/services/delete/{service_id}")
@@ -285,3 +291,29 @@ async def delete_service(
         await db.execute("DELETE FROM services WHERE id = ?", (service_id,))
         await db.commit()
     return RedirectResponse(url="/services/manage", status_code=303)
+
+from fastapi import Depends, HTTPException
+
+# Отображение бизнес каталога (доступно клиентам, сотрудникам и администраторам)
+@router.get("/services/business", response_class=HTMLResponse)
+async def view_business_catalog(request: Request, current_user: dict = Depends(get_current_user)):
+    async with aiosqlite.connect(DATABASE) as db:
+        async with db.execute("""
+            SELECT id, name, description, price, price_per
+            FROM services
+            WHERE category = 'business' AND is_active = 1
+        """) as cursor:
+            services = await cursor.fetchall()
+    return templates.TemplateResponse("services.html", {"request": request, "services": services, "user": current_user})
+
+# Отображение технического каталога (только для администраторов и сотрудников)
+@router.get("/services/technical", response_class=HTMLResponse)
+async def view_technical_catalog(request: Request, current_user: dict = Depends(role_required(['employee', 'admin']))):
+    async with aiosqlite.connect(DATABASE) as db:
+        async with db.execute("""
+            SELECT id, name, description, price, price_per
+            FROM services
+            WHERE category = 'technical' AND is_active = 1
+        """) as cursor:
+            services = await cursor.fetchall()
+    return templates.TemplateResponse("services.html", {"request": request, "services": services, "user": current_user})
