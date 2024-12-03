@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-light text-center">Каталог услуг</h1>
+<p class="text-light">Категория: {{ 'Бизнес' if user.role == 'user' else 'Технический' }}</p>
+
+<ul class="list-group">
+    {% for service in services %}
+    <li class="list-group-item bg-dark text-light mb-3 rounded">
+        <strong>{{ service[1] }}</strong>: {{ service[2] }}<br>
+        Цена: {{ service[3] }} за {{ 'единицу' if service[4] == 'unit' else 'час' if service[4] == 'hour' else 'сутки' }}
+    </li>
+    {% endfor %}
+</ul>
+
+{% if user.role in ['employee', 'admin'] %}
+<div class="text-center mt-3">
+    <a href="/services/manage" class="btn btn-info btn-lg">Управление услугами</a>
+</div>
+{% endif %}
+{% endblock %}
