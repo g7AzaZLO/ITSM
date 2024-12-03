@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Создать заявку с описанием проблемы и выбором услуг</h1>
+<form method="post" id="combinedForm">
+    <!-- Поля для описания инцидента -->
+    <h3>Описание проблемы</h3>
+    <label for="title">Тема:</label><br>
+    <input type="text" id="title" name="title" required><br><br>
+    <label for="description">Описание:</label><br>
+    <textarea id="description" name="description" rows="5" cols="50" required></textarea><br><br>
+
+    <!-- Поля для выбора услуг -->
+    <h3>Выбор услуг</h3>
+    <label for="serviceSelect">Выберите услугу:</label><br>
+    <select id="serviceSelect">
+        <option value="" disabled selected>Выберите услугу</option>
+        {% for service in services %}
+        <option value="{{ service[0] }}" data-name="{{ service[1] }}" data-price="{{ service[2] }}" data-unit="{{ service[3] }}">
+            {{ service[1] }} - {{ service[2] }} за
+            {{ 'единицу' if service[3] == 'unit' else 'час' if service[3] == 'hour' else 'сутки' }}
+        </option>
+        {% endfor %}
+    </select>
+    <br>
+    <label for="quantity">Количество:</label>
+    <input type="number" id="quantity" min="1" value="1">
+    <button type="button" id="addServiceButton">Добавить</button>
+
+    <h3>Выбранные услуги</h3>
+    <table id="selectedServicesTable" border="1">
+        <thead>
+            <tr>
+                <th>Услуга</th>
+                <th>Цена</th>
+                <th>Количество</th>
+                <th>Стоимость</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Динамически добавленные услуги будут здесь -->
+        </tbody>
+    </table>
+
+    <input type="hidden" id="selectedServices" name="selectedServices"> <!-- Для передачи на сервер -->
+    <br><button type="submit">Отправить</button>
+</form>
+
+<script>
+    const serviceSelect = document.getElementById('serviceSelect');
+    const quantityInput = document.getElementById('quantity');
+    const addServiceButton = document.getElementById('addServiceButton');
+    const selectedServicesTable = document.getElementById('selectedServicesTable').querySelector('tbody');
+    const selectedServicesInput = document.getElementById('selectedServices');
+
+    let selectedServices = []; // Массив выбранных услуг
+
+    // Добавление услуги в таблицу
+    addServiceButton.addEventListener('click', () => {
+        const serviceId = serviceSelect.value;
+        const serviceName = serviceSelect.options[serviceSelect.selectedIndex].dataset.name;
+        const servicePrice = parseFloat(serviceSelect.options[serviceSelect.selectedIndex].dataset.price);
+        const serviceUnit = serviceSelect.options[serviceSelect.selectedIndex].dataset.unit;
+        const quantity = parseInt(quantityInput.value);
+
+        if (!serviceId || quantity < 1) {
+            alert('Выберите услугу и укажите корректное количество.');
+            return;
+        }
+
+        // Проверяем, есть ли уже такая услуга в списке
+        const existingService = selectedServices.find(service => service.id === serviceId);
+        if (existingService) {
+            alert('Эта услуга уже добавлена. Вы можете изменить её количество.');
+            return;
+        }
+
+        // Добавляем услугу в список
+        const totalCost = servicePrice * quantity;
+        selectedServices.push({ id: serviceId, name: serviceName, price: servicePrice, unit: serviceUnit, quantity, totalCost });
+
+        // Добавляем услугу в таблицу
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${serviceName}</td>
+            <td>${servicePrice}</td>
+            <td>${quantity}</td>
+            <td>${totalCost}</td>
+            <td><button type="button" class="removeServiceButton" data-id="${serviceId}">Удалить</button></td>
+        `;
+        selectedServicesTable.appendChild(row);
+
+        // Обновляем скрытое поле
+        updateHiddenInput();
+
+        // Сбрасываем выбор
+        serviceSelect.value = '';
+        quantityInput.value = 1;
+    });
+
+    // Удаление услуги из таблицы
+    selectedServicesTable.addEventListener('click', (event) => {
+        if (event.target.classList.contains('removeServiceButton')) {
+            const serviceId = event.target.dataset.id;
+            selectedServices = selectedServices.filter(service => service.id !== serviceId);
+
+            // Удаляем строку из таблицы
+            event.target.closest('tr').remove();
+
+            // Обновляем скрытое поле
+            updateHiddenInput();
+        }
+    });
+
+    // Обновление скрытого поля для передачи на сервер
+    function updateHiddenInput() {
+        selectedServicesInput.value = JSON.stringify(selectedServices);
+    }
+</script>
+{% endblock %}

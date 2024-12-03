@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1 class="text-light text-center">Управление услугами</h1>
+
+    <div class="row">
+        <!-- Контейнер для добавления новой услуги -->
+        <div class="col-md-6 mb-4">
+            <h2 class="text-light">Добавить новую услугу</h2>
+            <form method="post" action="/services/add" class="bg-dark p-4 rounded shadow">
+                <div class="form-group">
+                    <label for="name" class="text-light">Название:</label>
+                    <input type="text" name="name" id="name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="text-light">Описание:</label>
+                    <textarea name="description" id="description" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="price" class="text-light">Цена:</label>
+                    <input type="number" step="0.01" name="price" id="price" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="price_per" class="text-light">Цена за:</label>
+                    <select name="price_per" id="price_per" class="form-control" required>
+                        <option value="unit">единицу</option>
+                        <option value="hour">час</option>
+                        <option value="day">сутки</option>
+                    </select>
+                </div>
+
+                {% if user.role == 'admin' %}
+                <div class="form-group">
+                    <label for="category" class="text-light">Категория:</label>
+                    <select name="category" id="category" class="form-control" required>
+                        <option value="business">Бизнес</option>
+                        <option value="technical">Технический</option>
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" name="category" value="business">
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="is_active" class="text-light">Активна:</label>
+                    <select name="is_active" id="is_active" class="form-control" required>
+                        <option value="1">Да</option>
+                        <option value="0">Нет</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-block">Добавить</button>
+            </form>
+        </div>
+
+            <!-- Контейнер для списка услуг -->
+            <div class="col-md-6">
+                <h2 class="text-light">Список услуг</h2>
+                <ul class="list-unstyled">
+                    {% for service in services %}
+                        <li class="mb-4">
+                            <!-- Название услуги, которое можно кликнуть для открытия/закрытия формы редактирования -->
+                            <div class="bg-dark p-3 rounded shadow">
+                                <strong class="text-light service-title" data-service-id="{{ service[0] }}" style="cursor: pointer;">
+                                    {{ service[1] }}
+                                </strong>
+                            </div>
+
+                            <!-- Форма редактирования, скрытая по умолчанию -->
+                            <div class="edit-form-container" id="edit-form-{{ service[0] }}" style="display: none; margin-top: 10px;">
+                                <form method="post" action="/services/edit/{{ service[0] }}" class="bg-dark p-4 rounded shadow">
+                                    <div class="form-group">
+                                        <label for="name_{{ service[0] }}" class="text-light">Название:</label>
+                                        <input type="text" name="name" id="name_{{ service[0] }}" class="form-control" value="{{ service[1] }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="description_{{ service[0] }}" class="text-light">Описание:</label>
+                                        <textarea name="description" id="description_{{ service[0] }}" class="form-control" required>{{ service[2] }}</textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="price_{{ service[0] }}" class="text-light">Цена:</label>
+                                        <input type="number" step="0.01" name="price" id="price_{{ service[0] }}" class="form-control" value="{{ service[3] }}" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="price_per_{{ service[0] }}" class="text-light">Цена за:</label>
+                                        <select name="price_per" id="price_per_{{ service[0] }}" class="form-control" required>
+                                            <option value="unit" {% if service[4] == 'unit' %}selected{% endif %}>единицу</option>
+                                            <option value="hour" {% if service[4] == 'hour' %}selected{% endif %}>час</option>
+                                            <option value="day" {% if service[4] == 'day' %}selected{% endif %}>сутки</option>
+                                        </select>
+                                    </div>
+
+                                    {% if user.role == 'admin' %}
+                                    <div class="form-group">
+                                        <label for="category_{{ service[0] }}" class="text-light">Категория:</label>
+                                        <select name="category" id="category_{{ service[0] }}" class="form-control" required>
+                                            <option value="business" {% if service[6] == 'business' %}selected{% endif %}>Бизнес</option>
+                                            <option value="technical" {% if service[6] == 'technical' %}selected{% endif %}>Технический</option>
+                                        </select>
+                                    </div>
+                                    {% else %}
+                                    <input type="hidden" name="category" value="business">
+                                    {% endif %}
+
+                                    <div class="form-group">
+                                        <label for="is_active_{{ service[0] }}" class="text-light">Активна:</label>
+                                        <select name="is_active" id="is_active_{{ service[0] }}" class="form-control" required>
+                                            <option value="1" {% if service[5] == 1 %}selected{% endif %}>Да</option>
+                                            <option value="0" {% if service[5] == 0 %}selected{% endif %}>Нет</option>
+                                        </select>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-warning btn-block">Сохранить</button>
+                                </form>
+
+                                <form method="post" action="/services/delete/{{ service[0] }}" onsubmit="return confirm('Вы уверены, что хотите удалить эту услугу?');" class="mt-2">
+                                    <button type="submit" class="btn btn-danger btn-block">Удалить</button>
+                                </form>
+                            </div>
+
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript для переключения видимости формы редактирования
+        document.querySelectorAll('.service-title').forEach(item => {
+            item.addEventListener('click', function() {
+                const serviceId = this.getAttribute('data-service-id');
+                const formContainer = document.getElementById(`edit-form-${serviceId}`);
+
+                // Переключаем видимость формы редактирования
+                if (formContainer.style.display === "none" || formContainer.style.display === "") {
+                    formContainer.style.display = "block";
+                } else {
+                    formContainer.style.display = "none";
+                }
+            });
+        });
+    </script>
+{% endblock %}

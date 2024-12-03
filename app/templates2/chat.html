@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Чат с {{ other_user[1] if other_user else 'Пользователем' }}</h1>
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+<div id="chat" class="chat">
+    {% for message in messages %}
+    <div class="message {% if message[0] == user.id %}sent{% else %}received{% endif %}">
+        <p>{{ message[2] }}</p>
+        <span>{{ message[3] }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% if other_user %}
+<form id="messageForm" method="post" action="/messages/send/{{ other_user[0] }}">
+    <textarea id="messageInput" name="content" required></textarea><br>
+    <button type="submit">Отправить</button>
+</form>
+<form method="post" action="/messages/delete-conversation/{{ other_user[0] }}">
+    <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить переписку?')">Удалить переписку</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var otherUserId = {{ other_user[0] }};
+    var chatDiv = document.getElementById('chat');
+
+    // Функция для получения и отображения сообщений
+    async function fetchMessages() {
+        try {
+            const response = await fetch('/messages/get/' + otherUserId);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.messages) {
+                    // Очищаем текущий чат
+                    chatDiv.innerHTML = '';
+                    // Добавляем сообщения
+                    data.messages.forEach(function(message) {
+                        var messageDiv = document.createElement('div');
+                        messageDiv.className = 'message ' + (message.sender_id == {{ user.id }} ? 'sent' : 'received');
+                        var p = document.createElement('p');
+                        p.textContent = message.content;
+                        var span = document.createElement('span');
+                        span.textContent = message.timestamp;
+                        messageDiv.appendChild(p);
+                        messageDiv.appendChild(span);
+                        chatDiv.appendChild(messageDiv);
+                    });
+                    // Прокручиваем чат вниз
+                    chatDiv.scrollTop = chatDiv.scrollHeight;
+                }
+            } else {
+                console.error('Ошибка при получении сообщений');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+        }
+    }
+
+    // Запускаем функцию при загрузке страницы
+    fetchMessages();
+
+    // Обновляем чат каждые 5 секунд
+    setInterval(fetchMessages, 5000);
+
+    // Прокручиваем чат вниз после отправки сообщения
+    var messageForm = document.getElementById('messageForm');
+    messageForm.addEventListener('submit', function() {
+        setTimeout(function() {
+            fetchMessages();
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }, 500);
+    });
+</script>
+{% endblock %}
