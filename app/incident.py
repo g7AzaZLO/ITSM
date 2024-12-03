@@ -1,3 +1,4 @@
+import json
 import os
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -9,36 +10,32 @@ from app.config import BASE_DIR, DATABASE
 router = APIRouter()
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "app", "templates"))
 
-# Маршрут для создания нового инцидента (для рядовых сотрудников)
-@router.get("/incidents/new", response_class=HTMLResponse)
-async def new_incident(request: Request, current_user: dict = Depends(get_current_user)):
-    return templates.TemplateResponse("new_incident.html", {"request": request, "user": current_user})
-
-@router.post("/incidents/new")
-async def create_incident(
-    request: Request,
-    title: str = Form(...),
-    description: str = Form(...),
-    current_user: dict = Depends(get_current_user)
-):
-    async with aiosqlite.connect(DATABASE) as db:
-        await db.execute("""
-            INSERT INTO incidents (title, description, status, created_at, updated_at, reporter_id)
-            VALUES (?, ?, 'open', datetime('now'), datetime('now'), ?)
-        """, (title, description, current_user['id']))
-        await db.commit()
-    return RedirectResponse(url="/incidents/my", status_code=303)
-
-# Маршрут для просмотра списка своих инцидентов (для рядовых сотрудников)
 @router.get("/incidents/my", response_class=HTMLResponse)
-async def my_incidents(request: Request, current_user: dict = Depends(get_current_user)):
+async def my_combined_requests(request: Request, current_user: dict = Depends(get_current_user)):
     async with aiosqlite.connect(DATABASE) as db:
-        db.row_factory = aiosqlite.Row  # Устанавливаем row_factory
+        db.row_factory = aiosqlite.Row
+        # Получаем инциденты пользователя
         async with db.execute("""
-            SELECT id AS incident_id, title, status, created_at FROM incidents WHERE reporter_id = ?
+            SELECT id AS incident_id, title, status, created_at
+            FROM incidents
+            WHERE reporter_id = ?
         """, (current_user['id'],)) as cursor:
-            incidents = await cursor.fetchall()
+            incidents = [dict(row) for row in await cursor.fetchall()]  # Преобразуем Row в словари
+
+        # Для каждого инцидента получаем связанные услуги
+        for incident in incidents:
+            async with db.execute("""
+                SELECT s.name, sci.quantity
+                FROM service_cart_items sci
+                JOIN services s ON sci.service_id = s.id
+                WHERE sci.request_id = (
+                    SELECT id FROM service_requests WHERE user_id = ? AND request_date = ?
+                )
+            """, (current_user['id'], incident['created_at'])) as cursor:
+                incident['services'] = [dict(row) for row in await cursor.fetchall()]  # Преобразуем Row в словари
+
     return templates.TemplateResponse("my_incidents.html", {"request": request, "incidents": incidents, "user": current_user})
+
 
 
 # Маршрут для просмотра списка всех инцидентов (для технической поддержки)
@@ -119,3 +116,66 @@ async def update_incident(
             """, (resolution_time, incident_id))
         await db.commit()
     return RedirectResponse(url=f"/incidents/{incident_id}", status_code=303)
+
+@router.get("/combined-request", response_class=HTMLResponse)
+async def combined_request_form(request: Request, current_user: dict = Depends(get_current_user)):
+    async with aiosqlite.connect(DATABASE) as db:
+        async with db.execute("""
+            SELECT id, name, price, price_per FROM services WHERE is_active = 1
+        """) as cursor:
+            services = await cursor.fetchall()
+    return templates.TemplateResponse("new_combined_form.html", {"request": request, "services": services, "user": current_user})
+
+
+
+@router.post("/combined-request")
+async def create_combined_request(
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(...),
+    selectedServices: str = Form(...),  # JSON-строка с выбранными услугами
+    current_user: dict = Depends(get_current_user)
+):
+    async with aiosqlite.connect(DATABASE) as db:
+        try:
+            # Создаем инцидент
+            await db.execute("""
+                INSERT INTO incidents (title, description, status, created_at, updated_at, reporter_id)
+                VALUES (?, ?, 'open', datetime('now'), datetime('now'), ?)
+            """, (title, description, current_user['id']))
+
+            # Получаем ID инцидента
+            async with db.execute("SELECT last_insert_rowid()") as cursor:
+                incident_id = (await cursor.fetchone())[0]
+
+            # Обрабатываем услуги
+            services = json.loads(selectedServices)
+            if services:
+                # Создаем заявку на услуги
+                await db.execute("""
+                    INSERT INTO service_requests (user_id, request_date, status, total_price)
+                    VALUES (?, datetime('now'), 'Pending', 0)
+                """, (current_user['id'],))
+
+                async with db.execute("SELECT last_insert_rowid()") as cursor:
+                    request_id = (await cursor.fetchone())[0]
+
+                total_price = 0
+                for service in services:
+                    total_price += service['totalCost']
+                    await db.execute("""
+                        INSERT INTO service_cart_items (request_id, service_id, quantity)
+                        VALUES (?, ?, ?)
+                    """, (request_id, service['id'], service['quantity']))
+
+                # Обновляем стоимость заявки
+                await db.execute("""
+                    UPDATE service_requests SET total_price = ? WHERE id = ?
+                """, (total_price, request_id))
+
+            await db.commit()
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"Ошибка создания заявки: {str(e)}")
+
+    return RedirectResponse(url="/incidents/my", status_code=303)

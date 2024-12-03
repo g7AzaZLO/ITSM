@@ -62,31 +62,21 @@
                         <a class="nav-link" href="/">Главная</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/services">Каталог услуг</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="/messages/contacts">Сообщения</a>
                     </li>
                     {% if user.role == 'user' %}
-
                         <li class="nav-item">
-                            <a class="nav-link" href="/cart">Корзина</a>
+                            <a class="nav-link" href="/combined-request">Создать заявку</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/service-requests/user">Мои заявки</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/incidents/new">Сообщить об инциденте</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/incidents/my">Мои инциденты</a>
+                            <a class="nav-link" href="/incidents/my">Мои заявки</a>
                         </li>
                     {% elif user.role != 'user' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/services">Каталог услуг</a>
+                    </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/services/manage">Управление услугами</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/service-requests">Заявки на услуги</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/incidents">Все инциденты</a>
