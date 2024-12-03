@@ -120,11 +120,15 @@ async def update_incident(
 @router.get("/combined-request", response_class=HTMLResponse)
 async def combined_request_form(request: Request, current_user: dict = Depends(get_current_user)):
     async with aiosqlite.connect(DATABASE) as db:
+        # Отображаем только бизнес-услуги
         async with db.execute("""
-            SELECT id, name, price, price_per FROM services WHERE is_active = 1
+            SELECT id, name, price, price_per 
+            FROM services 
+            WHERE category = 'business' AND is_active = 1
         """) as cursor:
-            services = await cursor.fetchall()
-    return templates.TemplateResponse("new_combined_form.html", {"request": request, "services": services, "user": current_user})
+            business_services = await cursor.fetchall()
+    return templates.TemplateResponse("new_combined_form.html", {"request": request, "services": business_services, "user": current_user})
+
 
 
 
@@ -133,7 +137,7 @@ async def create_combined_request(
     request: Request,
     title: str = Form(...),
     description: str = Form(...),
-    selectedServices: str = Form(...),  # JSON-строка с выбранными услугами
+    selectedServices: list[int] = Form(...),  # Список ID выбранных услуг
     current_user: dict = Depends(get_current_user)
 ):
     async with aiosqlite.connect(DATABASE) as db:
@@ -148,9 +152,8 @@ async def create_combined_request(
             async with db.execute("SELECT last_insert_rowid()") as cursor:
                 incident_id = (await cursor.fetchone())[0]
 
-            # Обрабатываем услуги
-            services = json.loads(selectedServices)
-            if services:
+            # Проверяем выбранные услуги
+            if selectedServices:
                 # Создаем заявку на услуги
                 await db.execute("""
                     INSERT INTO service_requests (user_id, request_date, status, total_price)
@@ -161,14 +164,24 @@ async def create_combined_request(
                     request_id = (await cursor.fetchone())[0]
 
                 total_price = 0
-                for service in services:
-                    total_price += service['totalCost']
+                for service_id in selectedServices:
+                    # Убедимся, что услуга является бизнес-услугой
+                    async with db.execute("""
+                        SELECT price FROM services WHERE id = ? AND category = 'business'
+                    """, (service_id,)) as cursor:
+                        service = await cursor.fetchone()
+                        if not service:
+                            raise HTTPException(status_code=400, detail="Некорректная услуга.")
+                        price = service[0]
+
+                    # Добавляем услугу в заявку
                     await db.execute("""
                         INSERT INTO service_cart_items (request_id, service_id, quantity)
                         VALUES (?, ?, ?)
-                    """, (request_id, service['id'], service['quantity']))
+                    """, (request_id, service_id, 1))  # Количество по умолчанию = 1
+                    total_price += price
 
-                # Обновляем стоимость заявки
+                # Обновляем общую стоимость заявки
                 await db.execute("""
                     UPDATE service_requests SET total_price = ? WHERE id = ?
                 """, (total_price, request_id))

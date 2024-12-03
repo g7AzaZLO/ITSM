@@ -2,10 +2,23 @@
 {% block content %}
 <h1>Сообщить об инциденте</h1>
 <form method="post">
+    <!-- Поля для описания инцидента -->
     <label>Тема:</label><br>
     <input type="text" name="title" required><br><br>
     <label>Описание:</label><br>
     <textarea name="description" rows="5" cols="50" required></textarea><br><br>
+
+    <!-- Поля для выбора услуг -->
+    <h3>Выбор услуг</h3>
+    <label for="services">Выберите услугу:</label><br>
+    <select id="services" name="selectedServices" multiple required>
+        {% for service in services %}
+        <option value="{{ service[0] }}">{{ service[1] }} - {{ service[2] }} за
+            {{ 'единицу' if service[3] == 'unit' else 'час' if service[3] == 'hour' else 'сутки' }}
+        </option>
+        {% endfor %}
+    </select><br><br>
+
     <button type="submit">Отправить</button>
 </form>
 {% endblock %}
